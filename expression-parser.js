@@ -5,6 +5,14 @@ import {isNully} from './modash.js' // need some mo?
 import {Expression} from './types.js';
 import {operatorsByPrecedence} from './constants.js';
 
+var numberOperations = {
+    '+': (o1, o2) => o1 + o2,
+    '-': (o1, o2) => o1 - o1,
+    '/': (o1, o2) => o1 / o2,
+    '*': (o1, o2) => o2 * o2,
+    '^': (o1, o2) => o1 ^ o2
+}
+
 export function parseExpression(input:string):Expression {
     var nextOperatorIndex = findNextOperator(input);
     if (!isNully(nextOperatorIndex)) {
@@ -18,15 +26,33 @@ export function parseExpression(input:string):Expression {
     }
 }
 
-export function printExpression(expression:Expression):string {
-    if (isNumber(expression)) {
-        return String(expression);
-    } else if (isVariable(expression)) {
-        return expression;
-    } else if (isOperation(expression)) {
-        if (expression.operands.length !== 2) throw new Error('Operands are not binary.');
-        return printExpression(expression.operands[0]) + expression.operator + printExpression(expression.operands[1]);
-    } else throw new Error('Cannot determine print expression type for expression' + expression);
+export function printExpression(exp:Expression):string {
+    if (isNumber(exp)) {
+        return String(exp);
+    } else if (isVariable(exp)) {
+        return exp;
+    } else if (isOperation(exp)) {
+        if (exp.operands.length !== 2) throw new Error('Operands are not binary.');
+        return printExpression(exp.operands[0]) + exp.operator + printExpression(exp.operands[1]);
+    } else throw new Error('Cannot determine print expression type for expression' + exp);
+}
+
+export function simplifyExpression(exp:Expression):Expression {
+    if (isNumber(exp)) {
+        return String(exp);
+    } else if (isVariable(exp)) {
+        return exp;
+    } else if (isOperation(exp)) {
+        if (exp.operands.length !== 2) throw new Error('Operands are not binary.');
+        return printExpression(exp.operands[0]) + exp.operator + printExpression(exp.operands[1]);
+    } else throw new Error('Cannot determine print expression type for expression' + exp);
+}
+
+//function simplifyOperation(operation:Operation):Expression {
+//}
+
+function combineNumbers(operation:Operation):number {
+    return numberOperations[operation.operator]()
 }
 
 function constructBinaryOperation(operator:Operator, operand1:Expression, operand2:Expression):Operation {
