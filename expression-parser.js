@@ -18,6 +18,17 @@ export function parseExpression(input:string):Expression {
     }
 }
 
+export function printExpression(expression:Expression):string {
+    if (isNumber(expression)) {
+        return String(expression);
+    } else if (isVariable(expression)) {
+        return expression;
+    } else if (isOperation(expression)) {
+        if (expression.operands.length !== 2) throw new Error('Operands are not binary.');
+        return printExpression(expression.operands[0]) + expression.operator + printExpression(expression.operands[1]);
+    } else throw new Error('Cannot determine print expression type for expression' + expression);
+}
+
 function constructBinaryOperation(operator:Operator, operand1:Expression, operand2:Expression):Operation {
     return {
         operator: operator,
