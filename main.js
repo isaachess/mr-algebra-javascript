@@ -7,4 +7,4 @@ var input:string = process.argv[2];
 
 var expression:Expression = parseExpression(input);
 
-console.log('expression', expression)
+console.log('expression', expression);

@@ -1,0 +1,1 @@
+export var operatorsByPrecedence:Operator[] = ['+', '-', '*', '/', '^'];
