@@ -24,6 +24,6 @@ export type ExpNumber = {
     num: number;
 }
 
-export type Operator = '+' | '/' | '-' | '*' | '^';
+export type Operator = '+' | '*';
 
 

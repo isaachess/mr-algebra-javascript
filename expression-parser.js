@@ -22,7 +22,7 @@ export function readExpression(input:string):Expression {
         var operand1 = input.slice(0, nextOperatorIndex);
         var operand2 = input.slice(nextOperatorIndex+1);
         var operator:any = input[nextOperatorIndex];
-        return newExpOperation(operator, readExpression(operand1), readExpression(operand2));
+        return newExpOperation(operator, [readExpression(operand1), readExpression(operand2)]);
     } else if (isNumber(input)) {
         return newExpNumber(Number(input));
     } else {
@@ -33,33 +33,84 @@ export function readExpression(input:string):Expression {
 // Show
 
 export function showExpression(exp:Expression):string {
-    if (exp.type === "ExpNumber") return showNumber(exp)
-    else if (exp.type === "ExpVariable") return showVariable(exp)
-    else if (exp.type === "ExpOperation") return showOperation(exp)
-    else throw new Error('Cannot determine print expression type for expression' + exp)
+    if (exp.type === "ExpNumber") return showNumber(exp);
+    else if (exp.type === "ExpVariable") return showVariable(exp);
+    else if (exp.type === "ExpOperation") return showOperation(exp);
+    else throw new Error('Cannot determine print expression type for expression' + exp);
 }
 
 function showNumber(expNum:ExpNumber):string {
-    return String(expNum.num)
+    return String(expNum.num);
 }
 
 function showVariable(expVar:ExpVariable):string {
-    return String(expVar.coefficient) + showVariablePowers(expVar.powers)
+    return String(expVar.coefficient) + showVariablePowers(expVar.powers);
 }
 
 function showVariablePowers(expVarPowers:ExpVariablePowers):string {
-    var variables = _.sortBy(_.keys(expVarPowers))
+    var variables = _.sortBy(_.keys(expVarPowers));
 
     var strings = _.map(variables, (variable) => {
-        var power = expVarPowers[variable]
-        if (power === 1) return variable
-        else return variable + "^" + String(power)
+        var power = expVarPowers[variable];
+        if (power === 1) return variable;
+        else return variable + "^" + String(power);
     })
-    return strings.join('')
+    return strings.join('');
 }
 
 function showOperation(expOp:ExpOperation):string {
-    return expOp.operands.map(showExpression).join(expOp.operator)
+    return expOp.operands.map(showExpression).join(expOp.operator);
+}
+
+function simplify(exp:Expression):Expression {
+    return simplifyMultiplication(exp);
+}
+
+function simplifyMultiplication(exp:Expression):Expression {
+    if (exp.type === 'ExpNumber') return exp;
+    if (exp.type === 'ExpVariable') return exp;
+    if (exp.type === 'ExpOperation') {
+        if (exp.operator === '+') {
+            return newExpOperation('+', exp.operands.map(simplifyMultiplication));
+        }
+        else if (exp.operator === '*') {
+            return simplifyMultiplication(performMultiplication(exp));
+        } else {
+            throw new Error('Cannot determine operator for simplifyMultiplication operation.');
+        }
+    } else {
+        throw new Error('Cannot determine expression type for simplifyMultiplication');
+    }
+}
+
+function performMultiplication(exp:ExpOperation):Expression {
+    if (exp.operator !== '*') throw new Error('Expression is not multiplication in performMultiplication.');
+    return exp.operands.reduce((acc:Expression, operand:Expression) => {
+        if (acc.type === 'ExpNumber' && operand.type === 'ExpNumber') return multiplyExpNumbers(acc, operand);
+        if (acc.type === 'ExpNumber' && operand.type === 'ExpVariable') return multiplyExpNumberExpVariable(acc, operand);
+        if (acc.type === 'ExpVariable' && operand.type === 'ExpNumber') return multiplyExpNumberExpVariable(operand, acc);
+        if (acc.type === 'ExpVariable' && operand.type === 'ExpVariable') return multiplyExpVars(acc, operand)
+    });
+}
+
+function multiplyExpNumbers(expNum1:ExpNumber, expNum2:ExpNumber):ExpNumber {
+    return newExpNumber(expNum1.num * expNum2.num);
+}
+
+function multiplyExpNumberExpVariable(expNum:ExpNumber, expVar:ExpVariable):ExpVariable {
+    return newExpVariable(expNum.num * expVar.coefficient, expVar.powers);
+}
+
+function multiplyExpVars(expVar1:ExpVariable, expVar2:ExpVariable):ExpVariable {
+    var coefficient = expVar1.coefficient * expVar2.coefficient;
+    var powers = _.merge(expVar1.powers, expVar2.powers, (power1, power2, key) => {
+        return (power1 || 0) + (power2 || 0);
+    })
+    return newExpVariable(coefficient, powers);
+}
+
+function operandsAreNumbers(operands:Expression[]):boolean {
+    return _.every(operands.map((operand) => operand.type === 'ExpNumber'));
 }
 
 // Simplify
@@ -111,7 +162,7 @@ function isNumber(exp:string):boolean {
 
 // Constructors
 
-function newExpOperation(operator:Operator, ...operands:Expression[]):ExpOperation {
+function newExpOperation(operator:Operator, operands:Expression[]):ExpOperation {
     return {
         type: 'ExpOperation',
         operator: operator,
