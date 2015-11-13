@@ -25,8 +25,12 @@ export function readExpression(input:string):Expression {
         return newExpOperation(operator, [readExpression(operand1), readExpression(operand2)]);
     } else if (isNumber(input)) {
         return newExpNumber(Number(input));
-    } else {
+    } else if (isVariable(input)) {
         return newUnaryExpVariable(1, input);
+    }
+    // else you must be wrapped in parens, so we strip them
+    else {
+        return readExpression(stripParens(input))
     }
 }
 
@@ -146,13 +150,31 @@ function operandsAreNumbers(operands:Expression[]):boolean {
 //     return numberOperations[operation.operator]()
 // }
 
-
+function stripParens(input:string):string {
+    if (input.length === 0) return '';
+    if (input[0] !== '(' || input[input.length-1] !== ')') throw new Error("Strip parens but ain't parens!");
+    else return input.slice(1, input.length-1)
+}
 
 function findNextOperator(input:string):number { // returns index of the operator
     var indices = _.map(operatorsByPrecedence, (operator) => {
-        return input.indexOf(operator);
+        return findTopLevelIndexOfOperator(input, operator);
     });
     return _.find(indices, (index) => index >= 0);
+}
+
+function findTopLevelIndexOfOperator(input:string, operator:string):number {
+    var inputArray = input.split('');
+    var finalAcc = inputArray.reduce((acc, character, index) => {
+        if (character === '(') acc.parenDepth = acc.parenDepth + 1;
+        else if (character === ')') acc.parenDepth = acc.parenDepth - 1;
+        else if (acc.parenDepth === 0 && character === operator) acc.index = index;
+        return acc;
+    }, {
+        index: -1,
+        parenDepth: 0,
+    });
+    return finalAcc.index;
 }
 
 // function constructOperation(operation, location, input):ExpOperation {
@@ -168,9 +190,9 @@ function isNumber(exp:string):boolean {
 //     return _.isObject(exp) && !!exp.operator;
 // }
 
-// function isVariable(exp:Expression):boolean {
-//     return _.isString(exp) && exp.length === 1;
-// }
+ function isVariable(exp:string):boolean {
+     return _.isString(exp) && exp.length === 1;
+ }
 
 
 // Constructors
