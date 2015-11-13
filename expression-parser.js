@@ -62,7 +62,7 @@ function showOperation(expOp:ExpOperation):string {
     return expOp.operands.map(showExpression).join(expOp.operator);
 }
 
-function simplify(exp:Expression):Expression {
+export function simplify(exp:Expression):Expression {
     return simplifyMultiplication(exp);
 }
 
@@ -85,12 +85,19 @@ function simplifyMultiplication(exp:Expression):Expression {
 
 function performMultiplication(exp:ExpOperation):Expression {
     if (exp.operator !== '*') throw new Error('Expression is not multiplication in performMultiplication.');
-    return exp.operands.reduce((acc:Expression, operand:Expression) => {
-        if (acc.type === 'ExpNumber' && operand.type === 'ExpNumber') return multiplyExpNumbers(acc, operand);
-        if (acc.type === 'ExpNumber' && operand.type === 'ExpVariable') return multiplyExpNumberExpVariable(acc, operand);
-        if (acc.type === 'ExpVariable' && operand.type === 'ExpNumber') return multiplyExpNumberExpVariable(operand, acc);
-        if (acc.type === 'ExpVariable' && operand.type === 'ExpVariable') return multiplyExpVars(acc, operand)
-    });
+    return exp.operands.reduce(performBinaryMultiplication);
+}
+
+function performBinaryMultiplication(exp1:Expression, exp2: Expression):Expression {
+    if (exp1.type === 'ExpNumber' && exp2.type === 'ExpNumber') return multiplyExpNumbers(exp1, exp2);
+    if (exp1.type === 'ExpNumber' && exp2.type === 'ExpVariable') return multiplyExpNumberExpVariable(exp1, exp2);
+    if (exp1.type === 'ExpVariable' && exp2.type === 'ExpNumber') return multiplyExpNumberExpVariable(exp2, exp1);
+    if (exp1.type === 'ExpVariable' && exp2.type === 'ExpVariable') return multiplyExpVars(exp1, exp2);
+    if (exp2.type === 'ExpOperation') return multiplyExpressionExpOperation(exp1, exp2);
+    if (exp1.type === 'ExpOperation') return multiplyExpressionExpOperation(exp2, exp1);
+    //if (exp1.type === 'ExpNumber' && exp2.type === 'ExpOperation') return multiplyExpressionExpOperation(exp1, exp2);
+    //if (exp1.type === 'ExpOperation' && exp2.type === 'ExpNumber') return multiplyExpressionExpOperation(exp2, exp1);
+    throw new Error('Cannot find performMultiplication case to execute.');
 }
 
 function multiplyExpNumbers(expNum1:ExpNumber, expNum2:ExpNumber):ExpNumber {
@@ -107,6 +114,12 @@ function multiplyExpVars(expVar1:ExpVariable, expVar2:ExpVariable):ExpVariable {
         return (power1 || 0) + (power2 || 0);
     })
     return newExpVariable(coefficient, powers);
+}
+
+function multiplyExpressionExpOperation(exp:Expression, expOperation:ExpOperation):ExpOperation {
+    if (expOperation.operator === '+') return newExpOperation('+', expOperation.operands.map((operand) => performBinaryMultiplication(operand, exp)));
+    if (expOperation.operator === '*') return newExpOperation('*', mapFirst(expOperation.operands, (operand) => performBinaryMultiplication(operand, exp)));
+    throw new Error('Unsupported operator in multiplyExpressionExpOperation.')
 }
 
 function operandsAreNumbers(operands:Expression[]):boolean {
@@ -191,3 +204,12 @@ function newExpNumber(num:number):ExpNumber {
     }
 }
 
+
+/////////////////////
+/// Crap functions // // Need some crap?
+/////////////////////
+
+function mapFirst<T>(array:T[], func:(item:T)=>T):T[] {
+    array[0] = func(array[0]);
+    return array;
+}
