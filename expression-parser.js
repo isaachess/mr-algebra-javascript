@@ -23,15 +23,51 @@ export function readExpression(input:string):Expression {
         var operand2 = input.slice(nextOperatorIndex+1);
         var operator:any = input[nextOperatorIndex];
         return newExpOperation(operator, [readExpression(operand1), readExpression(operand2)]);
-    } else if (isNumber(input)) {
-        return newExpNumber(Number(input));
+    // } else if (isNumber(input)) {
+    //     return newExpNumber(Number(input));
     } else if (isVariable(input)) {
-        return newUnaryExpVariable(1, input);
+        return readExpVariable(input)
     }
     // else you must be wrapped in parens, so we strip them
     else {
         return readExpression(stripParens(input))
     }
+}
+
+export function readExpVariable(input:string):ExpVariable {
+    var expVar = newExpVariable(1, {})
+    var words = splitByChars(input)
+    words.forEach((word) => {
+        if (isNumber(word)) expVar.coefficient = Number(word)
+        else {
+            let splitWord = word.split('^')
+            let power = (splitWord.length == 1) ? 1 : Number(splitWord[1])
+            let powers = {}
+            if (splitWord[0].length > 0) powers[splitWord[0]] = power
+            expVar = multiplyExpVars(expVar, newExpVariable(1, powers))
+        }
+    })
+
+    return expVar
+}
+
+
+
+function splitByChars(input:string):string[] {
+    var splitted = []
+    var previousIndex = 0
+    for (var i = 0; i < input.length; i++) {
+        if (isLetterChar(input.charAt(i))) {
+            splitted.push(input.slice(previousIndex, i))
+            previousIndex = i
+        }
+    }
+    splitted.push(input.slice(previousIndex))
+    return splitted
+}
+
+function isLetterChar(cha:string):boolean {
+    return /[a-zA-Z]/.test(cha)
 }
 
 // Show
@@ -182,6 +218,7 @@ function findTopLevelIndexOfOperator(input:string, operator:string):number {
 // }
 
 function isNumber(exp:string):boolean {
+    if (exp.length === 0) return false
     var numExp = Number(exp);
     return _.isFinite(numExp);
 }
