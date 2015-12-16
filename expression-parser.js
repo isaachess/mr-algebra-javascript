@@ -7,10 +7,10 @@ import {operatorsByPrecedence} from './constants.js';
 
 var numberOperations = {
     '+': (o1, o2) => o1 + o2,
-    '-': (o1, o2) => o1 - o1,
-    '/': (o1, o2) => o1 / o2,
+    // '-': (o1, o2) => o1 - o1,
+    // '/': (o1, o2) => o1 / o2,
     '*': (o1, o2) => o2 * o2,
-    '^': (o1, o2) => o1 ^ o2
+    // '^': (o1, o2) => o1 ^ o2
 }
 
 // Read
@@ -213,9 +213,6 @@ function findTopLevelIndexOfOperator(input:string, operator:string):number {
     return finalAcc.index;
 }
 
-// function constructOperation(operation, location, input):ExpOperation {
-
-// }
 
 function isNumber(exp:string):boolean {
     if (exp.length === 0) return false
@@ -223,13 +220,10 @@ function isNumber(exp:string):boolean {
     return _.isFinite(numExp);
 }
 
-// function isOperation(exp:Expression):boolean {
-//     return _.isObject(exp) && !!exp.operator;
-// }
 
- function isVariable(exp:string):boolean {
-     return _.isString(exp) && exp.length === 1;
- }
+function isVariable(exp:string):boolean {
+    return /^\d*(?:[a-zA-Z](?:\^\d+)*)*$/.test(exp)
+}
 
 
 // Constructors
