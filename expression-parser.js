@@ -101,16 +101,18 @@ export function simplify(exp:Expression):Expression {
 
 function simplifyMultiplication(exp:Expression):Expression {
     if (exp.type === 'ExpVariable') return exp;
-    if (exp.type === 'ExpOperation') {
+    else if (exp.type === 'ExpOperation') {
         if (exp.operator === '+') {
             return newExpOperation('+', exp.operands.map(simplifyMultiplication));
         }
         else if (exp.operator === '*') {
             return simplifyMultiplication(performMultiplication(exp));
-        } else {
+        }
+        else {
             throw new Error('Cannot determine operator for simplifyMultiplication operation.');
         }
-    } else {
+    }
+    else {
         throw new Error('Cannot determine expression type for simplifyMultiplication');
     }
 }
@@ -129,7 +131,7 @@ function performBinaryMultiplication(exp1:Expression, exp2:Expression):Expressio
 
 function multiplyExpVars(expVar1:ExpVariable, expVar2:ExpVariable):ExpVariable {
     var coefficient = expVar1.coefficient * expVar2.coefficient;
-    var powers = _.merge(expVar1.powers, expVar2.powers, (power1, power2, key) => {
+    var powers = _.merge(_.clone(expVar1.powers), _.clone(expVar2.powers), (power1, power2, key) => {
         return (power1 || 0) + (power2 || 0);
     })
     return newExpVariable(coefficient, powers);
