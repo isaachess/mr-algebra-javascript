@@ -2,7 +2,7 @@
 
 import _ from 'lodash'
 import {isNully} from './modash.js' // need some mo?
-import {Expression, ExpOperation, ExpVariable, ExpVariablePowers, ExpNumber, Operator} from './types.js';
+import {Expression, ExpOperation, ExpVariable, ExpVariablePowers, Operator} from './types.js';
 import {operatorsByPrecedence} from './constants.js';
 
 var numberOperations = {
@@ -23,8 +23,6 @@ export function readExpression(input:string):Expression {
         var operand2 = input.slice(nextOperatorIndex+1);
         var operator:any = input[nextOperatorIndex];
         return newExpOperation(operator, [readExpression(operand1), readExpression(operand2)]);
-    // } else if (isNumber(input)) {
-    //     return newExpNumber(Number(input));
     } else if (isVariable(input)) {
         return readExpVariable(input)
     }
@@ -73,14 +71,9 @@ function isLetterChar(cha:string):boolean {
 // Show
 
 export function showExpression(exp:Expression):string {
-    if (exp.type === "ExpNumber") return showNumber(exp);
-    else if (exp.type === "ExpVariable") return showVariable(exp);
+    if (exp.type === "ExpVariable") return showVariable(exp);
     else if (exp.type === "ExpOperation") return showOperation(exp);
     else throw new Error('Cannot determine print expression type for expression' + exp);
-}
-
-function showNumber(expNum:ExpNumber):string {
-    return String(expNum.num);
 }
 
 function showVariable(expVar:ExpVariable):string {
@@ -107,7 +100,6 @@ export function simplify(exp:Expression):Expression {
 }
 
 function simplifyMultiplication(exp:Expression):Expression {
-    if (exp.type === 'ExpNumber') return exp;
     if (exp.type === 'ExpVariable') return exp;
     if (exp.type === 'ExpOperation') {
         if (exp.operator === '+') {
@@ -125,27 +117,14 @@ function simplifyMultiplication(exp:Expression):Expression {
 
 function performMultiplication(exp:ExpOperation):Expression {
     if (exp.operator !== '*') throw new Error('Expression is not multiplication in performMultiplication.');
-    return exp.operands.reduce(performBinaryMultiplication);
+    return exp.operands.reduce(performBinaryMultiplication, newExpVariable(1, {}));
 }
 
-function performBinaryMultiplication(exp1:Expression, exp2: Expression):Expression {
-    if (exp1.type === 'ExpNumber' && exp2.type === 'ExpNumber') return multiplyExpNumbers(exp1, exp2);
-    if (exp1.type === 'ExpNumber' && exp2.type === 'ExpVariable') return multiplyExpNumberExpVariable(exp1, exp2);
-    if (exp1.type === 'ExpVariable' && exp2.type === 'ExpNumber') return multiplyExpNumberExpVariable(exp2, exp1);
+function performBinaryMultiplication(exp1:Expression, exp2:Expression):Expression {
     if (exp1.type === 'ExpVariable' && exp2.type === 'ExpVariable') return multiplyExpVars(exp1, exp2);
     if (exp2.type === 'ExpOperation') return multiplyExpressionExpOperation(exp1, exp2);
     if (exp1.type === 'ExpOperation') return multiplyExpressionExpOperation(exp2, exp1);
-    //if (exp1.type === 'ExpNumber' && exp2.type === 'ExpOperation') return multiplyExpressionExpOperation(exp1, exp2);
-    //if (exp1.type === 'ExpOperation' && exp2.type === 'ExpNumber') return multiplyExpressionExpOperation(exp2, exp1);
     throw new Error('Cannot find performMultiplication case to execute.');
-}
-
-function multiplyExpNumbers(expNum1:ExpNumber, expNum2:ExpNumber):ExpNumber {
-    return newExpNumber(expNum1.num * expNum2.num);
-}
-
-function multiplyExpNumberExpVariable(expNum:ExpNumber, expVar:ExpVariable):ExpVariable {
-    return newExpVariable(expNum.num * expVar.coefficient, expVar.powers);
 }
 
 function multiplyExpVars(expVar1:ExpVariable, expVar2:ExpVariable):ExpVariable {
@@ -160,10 +139,6 @@ function multiplyExpressionExpOperation(exp:Expression, expOperation:ExpOperatio
     if (expOperation.operator === '+') return newExpOperation('+', expOperation.operands.map((operand) => performBinaryMultiplication(operand, exp)));
     if (expOperation.operator === '*') return newExpOperation('*', mapFirst(expOperation.operands, (operand) => performBinaryMultiplication(operand, exp)));
     throw new Error('Unsupported operator in multiplyExpressionExpOperation.')
-}
-
-function operandsAreNumbers(operands:Expression[]):boolean {
-    return _.every(operands.map((operand) => operand.type === 'ExpNumber'));
 }
 
 // Simplify
@@ -247,13 +222,6 @@ function newExpVariable(coefficient:number, variablePowers:ExpVariablePowers):Ex
         type: 'ExpVariable',
         coefficient: coefficient,
         powers: variablePowers
-    }
-}
-
-function newExpNumber(num:number):ExpNumber {
-    return {
-        type: 'ExpNumber',
-        num: num
     }
 }
 
