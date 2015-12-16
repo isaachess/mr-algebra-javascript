@@ -96,8 +96,35 @@ function showOperation(expOp:ExpOperation):string {
 }
 
 export function simplify(exp:Expression):Expression {
-    return simplifyMultiplication(exp);
+    var multiplied = simplifyMultiplication(exp);
+    return simplifyAddition(multiplied);
 }
+
+// Addition
+
+function simplifyAddition(exp:Expression):Expression {
+    var operands = flattenedOperands(exp)
+    var simplifiedOperands = operands.reduce((acc:ExpVariable[], operand:ExpVariable) => {
+        var addableEdibleIndex = _.findIndex(acc, (expVar:ExpVariable) => canAddExpVariables(expVar, operand))
+        if (addableEdibleIndex < 0) acc.push(operand)
+        else acc[addableEdibleIndex].coefficient = acc[addableEdibleIndex].coefficient + operand.coefficient
+        return acc
+    }, [])
+    return newExpOperation('+', simplifiedOperands)
+}
+
+function canAddExpVariables(expVar1:ExpVariable, expVar2:ExpVariable):boolean {
+    return _.isEqual(expVar1.powers, expVar2.powers)
+}
+
+function flattenedOperands(exp:Expression):ExpVariable[] {
+    if (exp.type === 'ExpVariable') return [exp]
+    return exp.operands.reduce((acc:Expression[], operand:Expression) => {
+        return acc.concat(flattenedOperands(operand))
+    }, [])
+}
+
+// Multiplication
 
 function simplifyMultiplication(exp:Expression):Expression {
     if (exp.type === 'ExpVariable') return exp;
