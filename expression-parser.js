@@ -123,7 +123,6 @@ function flattenedOperands(exp:Expression):ExpVariable[] {
 // Multiplication
 
 function simplifyMultiplication(exp:Expression):Expression {
-    exp = _.cloneDeep(exp)
     if (exp.type === 'ExpVariable') return exp;
     else if (exp.type === 'ExpOperation') {
         if (exp.operator === '+') {
@@ -142,14 +141,11 @@ function simplifyMultiplication(exp:Expression):Expression {
 }
 
 function performMultiplication(exp:ExpOperation):Expression {
-    exp = _.cloneDeep(exp)
     if (exp.operator !== '*') throw new Error('Expression is not multiplication in performMultiplication.');
     return exp.operands.reduce(performBinaryMultiplication, newExpVariable(1, {}));
 }
 
 function performBinaryMultiplication(exp1:Expression, exp2:Expression):Expression {
-    exp1 = _.cloneDeep(exp1)  // I hate mutations!
-    exp2 = _.cloneDeep(exp2)
     if (exp1.type === 'ExpVariable' && exp2.type === 'ExpVariable') return multiplyExpVars(exp1, exp2);
     else if (exp2.type === 'ExpOperation') return multiplyExpressionExpOperation(exp1, exp2);
     else if (exp1.type === 'ExpOperation') return multiplyExpressionExpOperation(exp2, exp1);
@@ -236,6 +232,7 @@ function newExpVariable(coefficient:number, variablePowers:ExpVariablePowers):Ex
 /////////////////////
 
 function mapFirst<T>(array:T[], func:(item:T)=>T):T[] {
+    array = _.cloneDeep(array);
     array[0] = func(array[0]);
     return array;
 }
