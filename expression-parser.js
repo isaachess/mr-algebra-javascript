@@ -129,6 +129,7 @@ function flattenedOperands(exp:Expression):ExpVariable[] {
 // Multiplication
 
 function simplifyMultiplication(exp:Expression):Expression {
+    exp = _.cloneDeep(exp)
     log('simplifying', showExpression(exp))
     if (exp.type === 'ExpVariable') return exp;
     else if (exp.type === 'ExpOperation') {
@@ -148,6 +149,7 @@ function simplifyMultiplication(exp:Expression):Expression {
 }
 
 function performMultiplication(exp:ExpOperation):Expression {
+    exp = _.cloneDeep(exp)
     if (exp.operator !== '*') throw new Error('Expression is not multiplication in performMultiplication.');
     log('performMultiplication', showExpression(exp))
     var x = exp.operands.reduce(performBinaryMultiplication, newExpVariable(1, {}));
@@ -157,6 +159,9 @@ function performMultiplication(exp:ExpOperation):Expression {
 
 function performBinaryMultiplication(exp1:Expression, exp2:Expression):Expression {
     var x;
+    exp1 = _.cloneDeep(exp1)  // I hate mutations!
+    exp2 = _.cloneDeep(exp2)
+
     if (exp1.type === 'ExpVariable' && exp2.type === 'ExpVariable') x = multiplyExpVars(exp1, exp2);
     else if (exp2.type === 'ExpOperation') x = multiplyExpressionExpOperation(exp1, exp2);
     else if (exp1.type === 'ExpOperation') x = multiplyExpressionExpOperation(exp2, exp1);
@@ -166,8 +171,9 @@ function performBinaryMultiplication(exp1:Expression, exp2:Expression):Expressio
 }
 
 function multiplyExpVars(expVar1:ExpVariable, expVar2:ExpVariable):ExpVariable {
+
     var coefficient = expVar1.coefficient * expVar2.coefficient;
-    var powers = _.merge(_.clone(expVar1.powers), _.clone(expVar2.powers), (power1, power2, key) => {
+    var powers = _.merge(_.cloneDeep(expVar1.powers), _.cloneDeep(expVar2.powers), (power1, power2, key) => {
         return (power1 || 0) + (power2 || 0);
     })
     return newExpVariable(coefficient, powers);
