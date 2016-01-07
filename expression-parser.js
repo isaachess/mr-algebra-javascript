@@ -73,7 +73,7 @@ function isLetterChar(cha:string):boolean {
 
 export function showExpression(exp:Expression):string {
     if (exp.type === "ExpVariable") return showVariable(exp);
-    else if (exp.type === "ExpOperation") return showOperation(exp);
+    else if (exp.type === "ExpOperation") return '(' + showOperation(exp) + ')';
     else throw new Error('Cannot determine print expression type for expression' + exp);
 }
 
@@ -98,7 +98,7 @@ function showOperation(expOp:ExpOperation):string {
 
 export function simplify(exp:Expression):Expression {
     var multiplied = simplifyMultiplication(exp);
-    log("multiplied", multiplied)
+    log("multiplied", showExpression(multiplied))
     return simplifyAddition(multiplied);
 }
 
@@ -129,6 +129,7 @@ function flattenedOperands(exp:Expression):ExpVariable[] {
 // Multiplication
 
 function simplifyMultiplication(exp:Expression):Expression {
+    log('simplifying', showExpression(exp))
     if (exp.type === 'ExpVariable') return exp;
     else if (exp.type === 'ExpOperation') {
         if (exp.operator === '+') {
@@ -148,14 +149,20 @@ function simplifyMultiplication(exp:Expression):Expression {
 
 function performMultiplication(exp:ExpOperation):Expression {
     if (exp.operator !== '*') throw new Error('Expression is not multiplication in performMultiplication.');
-    return exp.operands.reduce(performBinaryMultiplication, newExpVariable(1, {}));
+    log('performMultiplication', showExpression(exp))
+    var x = exp.operands.reduce(performBinaryMultiplication, newExpVariable(1, {}));
+    log('x', showExpression(x))
+    return x
 }
 
 function performBinaryMultiplication(exp1:Expression, exp2:Expression):Expression {
-    if (exp1.type === 'ExpVariable' && exp2.type === 'ExpVariable') return multiplyExpVars(exp1, exp2);
-    if (exp2.type === 'ExpOperation') return multiplyExpressionExpOperation(exp1, exp2);
-    if (exp1.type === 'ExpOperation') return multiplyExpressionExpOperation(exp2, exp1);
-    throw new Error('Cannot find performMultiplication case to execute.');
+    var x;
+    if (exp1.type === 'ExpVariable' && exp2.type === 'ExpVariable') x = multiplyExpVars(exp1, exp2);
+    else if (exp2.type === 'ExpOperation') x = multiplyExpressionExpOperation(exp1, exp2);
+    else if (exp1.type === 'ExpOperation') x = multiplyExpressionExpOperation(exp2, exp1);
+    //throw new Error('Cannot find performMultiplication case to execute.');
+    console.log('exp1', showExpression(exp1), 'exp2', showExpression(exp2), 'result', showExpression(x))
+    return x
 }
 
 function multiplyExpVars(expVar1:ExpVariable, expVar2:ExpVariable):ExpVariable {
