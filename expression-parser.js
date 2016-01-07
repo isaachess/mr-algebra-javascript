@@ -4,14 +4,11 @@ import _ from 'lodash'
 import {isNully} from './modash.js' // need some mo?
 import {Expression, ExpOperation, ExpVariable, ExpVariablePowers, Operator} from './types.js';
 import {operatorsByPrecedence} from './constants.js';
-import {log} from './debug.js';
 
+// We only support + and * as operators
 var numberOperations = {
     '+': (o1, o2) => o1 + o2,
-    // '-': (o1, o2) => o1 - o1,
-    // '/': (o1, o2) => o1 / o2,
     '*': (o1, o2) => o2 * o2,
-    // '^': (o1, o2) => o1 ^ o2
 }
 
 // Read
@@ -49,8 +46,6 @@ export function readExpVariable(input:string):ExpVariable {
 
     return expVar
 }
-
-
 
 function splitByChars(input:string):string[] {
     var splitted = []
@@ -98,7 +93,6 @@ function showOperation(expOp:ExpOperation):string {
 
 export function simplify(exp:Expression):Expression {
     var multiplied = simplifyMultiplication(exp);
-    log("multiplied", showExpression(multiplied))
     return simplifyAddition(multiplied);
 }
 
@@ -130,7 +124,6 @@ function flattenedOperands(exp:Expression):ExpVariable[] {
 
 function simplifyMultiplication(exp:Expression):Expression {
     exp = _.cloneDeep(exp)
-    log('simplifying', showExpression(exp))
     if (exp.type === 'ExpVariable') return exp;
     else if (exp.type === 'ExpOperation') {
         if (exp.operator === '+') {
@@ -151,27 +144,19 @@ function simplifyMultiplication(exp:Expression):Expression {
 function performMultiplication(exp:ExpOperation):Expression {
     exp = _.cloneDeep(exp)
     if (exp.operator !== '*') throw new Error('Expression is not multiplication in performMultiplication.');
-    log('performMultiplication', showExpression(exp))
-    var x = exp.operands.reduce(performBinaryMultiplication, newExpVariable(1, {}));
-    log('x', showExpression(x))
-    return x
+    return exp.operands.reduce(performBinaryMultiplication, newExpVariable(1, {}));
 }
 
 function performBinaryMultiplication(exp1:Expression, exp2:Expression):Expression {
-    var x;
     exp1 = _.cloneDeep(exp1)  // I hate mutations!
     exp2 = _.cloneDeep(exp2)
-
-    if (exp1.type === 'ExpVariable' && exp2.type === 'ExpVariable') x = multiplyExpVars(exp1, exp2);
-    else if (exp2.type === 'ExpOperation') x = multiplyExpressionExpOperation(exp1, exp2);
-    else if (exp1.type === 'ExpOperation') x = multiplyExpressionExpOperation(exp2, exp1);
-    //throw new Error('Cannot find performMultiplication case to execute.');
-    console.log('exp1', showExpression(exp1), 'exp2', showExpression(exp2), 'result', showExpression(x))
-    return x
+    if (exp1.type === 'ExpVariable' && exp2.type === 'ExpVariable') return multiplyExpVars(exp1, exp2);
+    else if (exp2.type === 'ExpOperation') return multiplyExpressionExpOperation(exp1, exp2);
+    else if (exp1.type === 'ExpOperation') return multiplyExpressionExpOperation(exp2, exp1);
+    throw new Error('Cannot find performMultiplication case to execute.');
 }
 
 function multiplyExpVars(expVar1:ExpVariable, expVar2:ExpVariable):ExpVariable {
-
     var coefficient = expVar1.coefficient * expVar2.coefficient;
     var powers = _.merge(_.cloneDeep(expVar1.powers), _.cloneDeep(expVar2.powers), (power1, power2, key) => {
         return (power1 || 0) + (power2 || 0);
@@ -180,38 +165,10 @@ function multiplyExpVars(expVar1:ExpVariable, expVar2:ExpVariable):ExpVariable {
 }
 
 function multiplyExpressionExpOperation(exp:Expression, expOperation:ExpOperation):ExpOperation {
-    // if (exp.type === 'ExpOperation') {
-    //     if (exp.operator === '+' && expOperation.operator === '+') return newExpOperation('+', expOperation.operands.map((operand) => performBinaryMultiplication(operand, exp)));
-    //     else if (exp.operator === '+' && expOperation.operator === '*') return newExpOperation('+', exp.    operands.map((operand) => performBinaryMultiplication(operand, exp)));
-    // }
-    // else {
-
-    // }
-
     if (expOperation.operator === '+') return newExpOperation('+', expOperation.operands.map((operand) => performBinaryMultiplication(operand, exp)));
     if (expOperation.operator === '*') return newExpOperation('*', mapFirst(expOperation.operands, (operand) => performBinaryMultiplication(operand, exp)));
     throw new Error('Unsupported operator in multiplyExpressionExpOperation.')
 }
-
-// Simplify
-
-// export function simplifyExpression(exp:Expression):Expression {
-//     if (isNumber(exp)) {
-//         return String(exp);
-//     } else if (isVariable(exp)) {
-//         return exp;
-//     } else if (isOperation(exp)) {
-//         if (exp.operands.length !== 2) throw new Error('Operands are not binary.');
-//         return printExpression(exp.operands[0]) + exp.operator + printExpression(exp.operands[1]);
-//     } else throw new Error('Cannot determine print expression type for expression' + exp);
-// }
-
-//function simplifyOperation(operation:Operation):Expression {
-//}
-
-// function combineNumbers(operation:ExpOperation):number {
-//     return numberOperations[operation.operator]()
-// }
 
 function stripParens(input:string):string {
     if (input.length === 0) return '';
@@ -240,18 +197,15 @@ function findTopLevelIndexOfOperator(input:string, operator:string):number {
     return finalAcc.index;
 }
 
-
 function isNumber(exp:string):boolean {
     if (exp.length === 0) return false
     var numExp = Number(exp);
     return _.isFinite(numExp);
 }
 
-
 function isVariable(exp:string):boolean {
     return /^\d*(?:[a-zA-Z](?:\^\d+)*)*$/.test(exp)
 }
-
 
 // Constructors
 
@@ -276,7 +230,6 @@ function newExpVariable(coefficient:number, variablePowers:ExpVariablePowers):Ex
         powers: variablePowers
     }
 }
-
 
 /////////////////////
 /// Crap functions // // Need some crap?
