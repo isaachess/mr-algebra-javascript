@@ -1,6 +1,6 @@
 // @flow
 
-import util from 'util'
+import {log} from './debug.js'
 import {readExpression, showExpression, simplify} from './expression-parser.js';
 import {Expression} from './types.js';
 
@@ -15,8 +15,3 @@ log('printedExpression', printedExpression);
 var simplified = simplify(expression);
 log('simplified', simplified);
 log('simplified', showExpression(simplified));
-
-
-function log(title, obj) {
-    console.log(title, util.inspect(obj, {showHidden:false, depth: null}))
-}

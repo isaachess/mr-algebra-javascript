@@ -4,6 +4,7 @@ import _ from 'lodash'
 import {isNully} from './modash.js' // need some mo?
 import {Expression, ExpOperation, ExpVariable, ExpVariablePowers, Operator} from './types.js';
 import {operatorsByPrecedence} from './constants.js';
+import {log} from './debug.js';
 
 var numberOperations = {
     '+': (o1, o2) => o1 + o2,
@@ -97,6 +98,7 @@ function showOperation(expOp:ExpOperation):string {
 
 export function simplify(exp:Expression):Expression {
     var multiplied = simplifyMultiplication(exp);
+    log("multiplied", multiplied)
     return simplifyAddition(multiplied);
 }
 
@@ -165,6 +167,14 @@ function multiplyExpVars(expVar1:ExpVariable, expVar2:ExpVariable):ExpVariable {
 }
 
 function multiplyExpressionExpOperation(exp:Expression, expOperation:ExpOperation):ExpOperation {
+    // if (exp.type === 'ExpOperation') {
+    //     if (exp.operator === '+' && expOperation.operator === '+') return newExpOperation('+', expOperation.operands.map((operand) => performBinaryMultiplication(operand, exp)));
+    //     else if (exp.operator === '+' && expOperation.operator === '*') return newExpOperation('+', exp.    operands.map((operand) => performBinaryMultiplication(operand, exp)));
+    // }
+    // else {
+
+    // }
+
     if (expOperation.operator === '+') return newExpOperation('+', expOperation.operands.map((operand) => performBinaryMultiplication(operand, exp)));
     if (expOperation.operator === '*') return newExpOperation('*', mapFirst(expOperation.operands, (operand) => performBinaryMultiplication(operand, exp)));
     throw new Error('Unsupported operator in multiplyExpressionExpOperation.')
